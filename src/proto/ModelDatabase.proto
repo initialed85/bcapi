@@ -1,0 +1,157 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "ModelDatabaseProtos";
+option optimize_for = CODE_SIZE;
+
+/**
+ * A BcModel represents static information on a particular device,
+ * detailing hardware configuration and capabilities. Information
+ * presented here is static, but may change across firmware versions.
+ */
+message BcModel {
+    enum Platform {
+        UNKNOWN = 0;
+        LX = 1;
+        LX4 = 2;
+        ME3 = 3;
+        ME4 = 4;
+        UX = 5;
+        JR = 6;
+        JR2 = 7;
+        LX5 = 8;
+    }
+    enum BW {
+        QUARTER = 1; // 5 Mhz
+        HALF = 2; // 10 Mhz
+        FULL = 3; // 20 Mhz
+        TURBO = 4; // 40 Mhz (ath5k)
+        HT20 = 5; // 20 Mhz High Throughput (802.11n)
+        HT40MINUS = 6; // 40 Mhz High Throughput (802.11n)
+        HT40PLUS = 7; // 40 Mhz High Throughput (802.11n)
+    }
+    message Feature {
+        optional bool allowLedToggle = 1 [default = true];
+        optional bool snmp = 2 [default = true];
+        optional bool capture = 3 [default = true];
+        optional bool compression = 4 [default = true];
+        optional bool FIPScertified = 5 [default = false];  // modeldb entries should only set this to true on FIPS branch!
+        optional bool modbus = 6 [default = false];
+    }
+    message RegDom {
+        required uint32 ccode = 1; // Unique identifier
+        required string name = 2;
+    }
+    message RadioModel {
+        message Certified {
+            required uint32 ccode = 1; // Unique identifier
+            optional uint32 powerLimit = 2;
+        }
+        message Channel {
+            // NOTE: the BW enum is duplicated above. That is
+            // because it was originally added at this level,
+            // but that was a mistake because it is needed
+            // at a higher level.
+            enum BW {
+                QUARTER = 1; // 5 Mhz
+                HALF = 2; // 10 Mhz
+                FULL = 3; // 20 Mhz
+                TURBO = 4; // 40 Mhz (ath5k)
+                HT20 = 5; // 20 Mhz High Throughput (802.11n)
+                HT40MINUS = 6; // 40 Mhz High Throughput (802.11n)
+                HT40PLUS = 7; // 40 Mhz High Throughput (802.11n)
+            }
+            message Bandwidth {
+                message Mode {
+                    enum Bitrate {
+                        A = 1;
+                        B = 2;
+                        G = 3;
+                        N = 4;
+                    }
+                    required Bitrate bitrate = 1; // Unique identifier
+                    repeated Certified cert = 2;
+                }
+                required BW bw = 1; // Unique identifier
+                repeated Certified cert = 3;
+                repeated Mode mode = 4;
+                optional uint32 maxRange = 5;   // In meters
+            }
+            required uint32 num = 1; // Unique identifier (Max is 255, 1 byte)
+            required int32 frequency = 2; // Actual frequency of the radio
+            optional int32 internalFrequency = 3; // Frequency the software thinks it is
+            required string name = 4;
+            repeated Certified cert = 6;
+            repeated Bandwidth bandwidth = 7;
+            optional BW defaultBw = 8 [default = FULL];
+        }
+        required string model = 1; // Unique identifier
+        optional string band = 2;
+        optional int32 amplifier = 3;
+        optional int32 maxPower = 4;
+        optional uint32 numTxAnt = 5 [default = 1];
+        optional uint32 numRxAnt = 6 [default = 1];
+        repeated Channel channel = 8;
+        optional bool compressionSupported = 9 [default = false];
+    }
+    message Wireless {
+        message Antenna {
+            required int32 slot = 1 [default = 0 ]; // Unique identifier
+            required bool tx = 2 [default = true];
+            required bool rx = 3 [default = true];
+            optional string label = 4;
+            optional int32 mask = 5; // Bit position
+            // optional int32 dbGain = 6; // Ideas for the future
+            // optional string desc = 7;  // Ideas for the future
+        }
+        message Region {
+            required uint32 ccode = 1; // Unique identifier
+            optional int32 defaultChannel = 2; // Overrides defaultChannel in Wireless message
+            optional int32 defaultPower = 3;
+            optional BW defaultBw = 4;
+        }
+        required uint32 index = 1; // Unique identifier
+        required string name = 2;
+        optional string pSlot = 3;
+        optional string bus = 8 [default = "pci"];
+        required string model = 4;
+        optional int32 defaultChannel = 5;
+        repeated Antenna antenna = 6;
+                optional uint32 numAp = 7 [default = 4];
+        repeated Region regions = 9;
+    }
+    message Wired {
+        enum Rate {
+            _10MB = 10;
+            _100MB = 100;
+            _1GB = 1000;
+            _10GB = 10000;
+        }
+        required uint32 index = 1; // Unique identifier
+        required string name = 2;
+        optional string pSlot = 3;
+        repeated Rate rate = 4;
+        optional bool internal = 5 [default = false];
+    }
+
+    optional string name = 1; // Unique identifier
+    optional string description = 2;
+    optional string userName = 11;
+    optional string case = 3;
+    optional Platform platform = 8;
+    optional bool battery = 9 [default = false];
+    optional bool gps = 10 [default = false];
+    optional Feature feature = 12;
+    optional bool deprecated = 13 [default = false]; // No longer selling this model, still supported by this release
+
+    repeated RadioModel radiodb = 4;
+
+    repeated Wireless wireless = 5;
+
+    repeated Wired wired = 6;
+
+    repeated RegDom region = 7;
+
+}
+
+message ModelDb {
+    repeated BcModel model = 1; // Breadcrumb models
+}

@@ -1,0 +1,205 @@
+//
+// This file contains a variety of common structures that are referenced
+// elsewhere in the BCAPI protocol.
+//
+
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "CommonProtos";
+option optimize_for = CODE_SIZE;
+
+import "Led.proto";
+
+/**
+ * The available authentication levels for a BCAPI session.
+ */
+enum Role {
+    VIEW = 0;
+    LOCAL = 1;
+    ADMIN = 2;
+    CO = 3;
+}
+
+/**
+ * Used by "delta" encoded messages to specify how to handle merging
+ * repeated fields.
+ */
+enum BCRAction {
+    ADD = 0;
+    DELETE = 1;
+    DELETE_ALL = 2;
+}
+
+/**
+ * Used by clients to submit tasks to the BreadCrumb.
+ */
+message TaskCommand {
+    enum TaskAction {
+        REBOOT = 0;
+        INSTALL = 1;
+        SNAPSHOT = 2;
+        ZEROIZE = 3;
+        FCC = 4;
+        CTM = 5;
+        TRACE = 6;
+        CLEAR = 7;
+        KICK = 8;
+    }
+    optional TaskAction action = 1;
+    optional string arguments = 2;
+    optional uint32 delay = 3; // milliseconds
+    optional string clientId = 9; // opaque client-supplied identifier (uuid intended)
+}
+
+/**
+ * Represents data that is available for download upon task completion.
+ */
+message TaskOutput {
+    enum CompressionType {
+        GZIP = 0;
+        LZMA = 1;
+        LZ = 3;
+        NONE = 4;
+    }
+    enum ContentType {
+        TEXT = 0;
+        BINARY = 2;
+        HTML = 3;
+        XML = 4;
+        PROTO = 5;
+    }
+    optional CompressionType compression = 1;
+    optional ContentType content = 2;
+    optional uint32 totalSize = 3; // bytes
+    optional string path = 4;
+}
+
+/**
+ * Represents the status of a Task.
+ */
+message TaskStatus {
+    enum TaskState {
+        FAILED = 0;
+        RUNNING = 1;
+        SUCCESS = 2;
+        QUEUED = 3;
+        DELAYED = 4;
+    }
+    optional TaskState state = 1;
+    optional string title = 2;
+    optional uint32 currentPosition = 3;
+    optional uint32 finalPosition = 4;
+    optional string unitType = 5;
+    optional string message = 6;
+    optional TaskOutput output = 7;
+    optional uint64 id = 8;
+    optional uint64 adminSessionID = 10; // refers to State.AdminSession.sessionID
+}
+
+/**
+ * Represents the status of a Task.
+ */
+message TaskObject {
+    optional TaskCommand command = 3;
+    optional string startTime = 4;
+    optional string stopTime = 5;
+    optional TaskStatus status = 6;
+}
+
+/**
+ * If a state task is marked SUCCESS and has output (see StateProtos.proto task) then
+ * a client can request the output from the task.
+ */
+message TaskOutputRequest {
+    optional uint32 position = 1; // file position request in bytes
+    optional uint32 maximumDataSize = 2 [ default = 61440 ]; // maxium fragment size to send
+    optional uint64 id = 3;
+}
+ 
+/**
+ * Returned in response to a TaskOutputRequest.
+ */
+message TaskOutputResponse {
+    enum Status {
+        FAILED = 0;
+        SUCCESS = 1;     // all available data output sent
+        FRAGMENT = 2;    // more data output available
+        UNAVAILABLE = 3; // output no longer available e.g. new task started
+    }
+    optional uint32 position = 1;    // if status FRAGMENT, then send additional TaskOutputRequest with this position 
+    optional TaskOutput output = 2;  // same information from the status
+    optional bytes data = 3;         // data payload of output
+    optional Status status = 4;      // current response status
+    optional uint64 id = 5;
+}
+
+/**
+ * Represents an individual Alert entry in the AlertSystem.
+ */
+message Alert {
+    enum AlertType {
+        ERROR = 0;
+        WARNING = 1;
+        INFORMATION = 2;
+    }
+    optional uint32 index = 1;
+    optional BCRAction action = 2;
+  optional AlertType type = 3 [default = INFORMATION];
+    optional string message = 4;
+    optional string applicationMessage = 5;
+    optional uint32 code = 6;
+    optional uint32 bestRadioRate = 7;
+}
+
+/**
+ * Conveys information about BreadCrumb health/status, including its LED state
+ * and alert messages.
+ */
+message AlertSystem {
+    optional LEDSequence led = 1;
+    optional uint32 bestRadioRate = 2;
+    repeated Alert alerts = 3;
+    optional string ledMode = 4;
+    optional bool identify = 5;
+}
+
+/**
+ * Encodes data returned as a result of the TRACE command, representing
+ * information about mesh routes... in particular, the next hop to a
+ * given destination from the crumb the TRACE was issued against.
+ */
+message Trace {
+    optional string host = 1;
+    optional BCRAction action = 2;
+
+    message ArpEntry {
+        optional bytes ipVlan = 1;
+        optional BCRAction action = 2;
+        optional string ip = 3;
+        optional uint32 vlan = 4;
+        optional bytes mac = 5;
+    }
+    repeated ArpEntry arp = 3;
+
+    message Path {
+        enum PathType {
+            LOCAL = 0;
+            WIRED_CLIENT = 1;
+            WIRELESS_CLIENT = 2;
+            APT_PEER = 3;
+            WIRELESS_PEER = 4;
+            RPT_PEER = 5;
+        }
+        optional PathType type = 1;
+        optional bytes mac = 2;
+        optional string ip = 3;
+        optional string name = 4;
+        optional uint32 cost = 5;
+        optional uint32 encapid = 6;
+        optional uint32 channel = 7;
+        optional uint32 freq = 8;
+        optional int32 signal = 9;
+        optional int32 rssi = 10;
+        optional int32 rate = 11;
+    }
+    optional Path path = 5;
+}

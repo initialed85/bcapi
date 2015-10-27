@@ -1,0 +1,10 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "LedProtos";
+option optimize_for = CODE_SIZE;
+
+/**
+ * Conveys the LED sequence active on a BreadCrumb.
+ */
+message LEDSequence {
+  optional string sequence = 1;
+}

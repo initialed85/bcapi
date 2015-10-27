@@ -1,0 +1,186 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "BCAPIProtos";
+option optimize_for = CODE_SIZE;
+
+// over the wire a 8 byte header prefixes the bcapi message proto
+// size (4 bytes) | compression (1 byte) | reserved (3 bytes)
+// compression: 0 = NONE, 2 = GZIP, 4 = LZMA, 8 = LZ
+
+package rajant.bc.proto;
+
+import "Config.proto";
+import "State.proto";
+import "Hardware.proto";
+import "System.proto";
+import "ModelDatabase.proto";
+import "Rule.proto";
+import "ConfigMeta.proto";
+import "Led.proto";
+import "Gps.proto";
+import "FileTransfer.proto";
+import "Common.proto";
+
+/**
+ * The base message used by BCAPI.  All messages sent between a BCAPI
+ * client and a BreadCrumb are this message type.
+ */
+message BCMessage {
+
+    enum CompressionType {
+        NONE = 0;
+        GZIP = 2;
+        LZMA = 4;
+        LZ = 8;
+    }
+
+    message WatchObject {
+        optional string messagePath = 1;
+        optional uint32 interval = 2 [ default = 5 ]; // seconds
+    }
+
+    message WatchRequest {
+        repeated WatchObject watchObject = 1; // empty list is watch everything
+        optional int64 unregister = 2;
+        optional int32 debugLevel = 3;
+    }
+
+    message WatchResponse {
+        optional State state = 1;
+        optional bool isDelta = 2 [ default = true ]; // DONT USE
+        optional int64 registrationId = 3 [ default = -1 ];
+    }
+
+    /**
+        * Represents the result of some operation requested by a BCAPI
+        * client.  These are always ignored by a BreadCrumb if sent by a
+        * client.
+        */
+    message Result {        
+        enum Status { FAILURE = 0; SUCCESS = 1; WARNING = 2; };
+        required Status status = 1 [ default = SUCCESS ]; //< The actual result of the operation.
+        optional string description = 2; //< A human-readable status message, if available.
+        optional uint64 id = 3; // the task id, if applicable
+    }
+
+    /**
+     * Represents the result of a Command request sent to a BreadCrumb.
+     * Commands may map to separate programs within a BreadCrumb.  This
+     * message type captures their output and exit code for the client.
+     * These are always ignored by a BreadCrumb if sent by a client.
+     */
+    message CommandResult {
+        required int32 code = 1; //< The exit code returned by the command.
+        optional bytes stdout = 2; //< The standard output of the command, if any.
+        optional bytes stderr = 3; //< The standard error of the command, if any.
+    }
+
+    /**
+     * Acknowledgment flag.  If sent by a BCAPI client, this indicates that
+     * the client requests an acknowledgment and expects a BCMessage in 
+     * response.  If sent by a BreadCrumb, this indicates that the BCMessage
+     * is itself an acknowledgment.
+     */
+    optional bool ack = 1 [ default = true ];
+    
+    /**
+     * Sequence number.  For messages sent by a BCAPI client, this is a
+     * unique identifier for each message sent by that client during the
+     * current session (typically just a counter).  For acknowledgment
+     * messages sent by a BreadCrumb (ack = true), this is the sequence
+     * number of the client message that is being acknowledged.  For non-
+     * acknowledgment messages sent by a BreadCrumb, this is a unique
+     * identifier for each message sent by that BreadCrumb during the
+     * current session (typically just a counter).
+     */  
+    required int64 sequenceNumber = 2;
+
+    /**
+     * Message type used for BCAPI client authentication.  The first
+     * messages of any BCAPI session MUST authenticate the client.
+     * See the BCAPI Developer's Guide for a description of this process.
+     * Auth messages sent by a BCAPI client after a successful authentication
+     * are ignored by the BreadCrumb.
+     */
+    message Auth {
+        enum Action { LOGIN = 0; LOGOUT = 1; }
+        required Action action = 1;   //< The action requested by the clientor BreadCrumb
+        optional Role role = 8;       //< The username/role being authenticated (e.g., "admin", "co", etc.)
+        optional string serial = 10;        // serial number (same as Hardware.serial)
+        optional string buildNumber = 11;   // firmware build number (same as State.Build.number)
+        optional string profile = 12;       // hardware profile (same as Hardware.profile)
+                                            
+        required bytes challengeOrResponse = 3; /**< If sent by a BreadCrumb, this is the authentication nonce.
+                                                 *   If sent by a client, this is the response.  See the BCAPI 
+                                                 *   Developer's Guide for a description of the authentication process.
+                                                 */                                              
+
+        // the following fields may be reported by a BCAPI client during login to a BreadCrumb.
+        // the information will be associated with the session and reported back to BCAPI clients.
+        optional string userAgent = 4;      // the name and version of the application connecting to the BreadCrumb via BCAPI
+        optional string remoteUsername = 5; // the username owning the BCAPI client process on the client
+        optional string remoteOS = 6;       // the operating system running the BCAPI client application
+        optional string appInstanceID = 7;  // a unique identifier for the *instance* of the BCAPI client application.  A client
+                                            // connecting to multiple BreadCrumbs should use the same identifier for each.  Two copies
+                                            // of a client program running simultaneously on the same machine or different machines
+                                            // should use different identifiers.  Some type of GUID or UUID is recommended.
+        optional uint32 compressionMask = 9;// mask of supported compressions by client/server
+                                            // 0 = NONE, 2 = GZIP, 4 = LZMA, 8 = LZ
+        
+                                                                                
+    }
+    optional Auth auth = 3; /**< Authentication challenge or response message.  See the BCAPI 
+                             *   Developer's Guide for a description of the authentication process.
+                             */
+    optional Result authResult = 300; //< Authentication result from the BreadCrumb
+    
+    /**
+     * Field used for a basic echo request or response in order to
+     * test or time round-trip communication with a BreadCrumb.  Any bytes sent
+     * by a BCAPI client will be echoed back in this field unmodified.
+     */
+    optional bytes echo = 4;
+
+    optional Config config = 5;
+    repeated Result configResult = 500;
+
+    optional State state = 6;
+    repeated Result stateResult = 600;
+
+    optional Hardware hardware = 7;
+    repeated Result hardwareResult = 700;
+
+    // only used internally by the BreadCrumb
+    optional SystemConfiguration system = 8;
+    repeated Result systemResult = 800;
+
+    optional BcModel model = 9;
+    repeated Result modelResult = 900;
+
+    optional RuleSet rules = 10;
+    repeated Result rulesResult = 1000;
+
+    optional ConfigMetaSet configMetaSet = 11;
+    repeated Result configMetaSetResult = 1100;
+
+    optional LEDSequence led = 12;
+    repeated Result LEDSequenceResult = 1200;
+
+    optional FileTransfer fileTransfer = 13;
+    repeated Result fileTransferResult = 1300;
+
+    optional GPS gps = 14;
+
+    optional TaskCommand runTask = 15;
+    optional Result runTaskResult = 1500;
+    
+    optional Alert alert = 16;
+    optional Result alertResult = 1600;
+
+    optional TaskOutputRequest taskOutputRequest = 17; 
+    optional TaskOutputResponse taskOutputResponse = 1700;  
+  
+    optional WatchRequest watchRequest = 18;
+    optional WatchResponse watchResponse = 1800;
+
+    optional string messageSource = 19;
+}

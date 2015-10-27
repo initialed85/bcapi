@@ -1,0 +1,361 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "ConfigProtos";
+option optimize_for = CODE_SIZE;
+import "Common.proto";
+message Config {
+    optional uint32 serial = 2;
+    message General {
+        optional string name = 1 ;
+        optional string notes = 2 ;
+        message Group {
+            optional string name = 1 ;
+            optional BCRAction action = 2;
+        }
+        repeated Group groups = 12 ;
+        optional string ledMode = 13 ;
+        optional uint32 adminPort = 14 ;
+        optional uint32 localNativeVLAN = 15 ;
+        optional bool obsolete3 = 16 ; // obsolete enableLedModeFeature
+        message System {
+            optional bytes obsolete1 = 1;
+            optional bytes obsolete2 = 2;
+            message SshKeys {
+                optional bytes authorized = 1;
+                optional bytes dss = 2;
+                optional bytes rsa = 3;
+            }
+            optional SshKeys sshKeys = 3;
+            optional string obsolete4 = 4;           // gnutls
+            message Ssl {
+                optional bytes publicKey = 1;
+                optional bytes privateKey = 2;
+                optional uint32 debugLevel = 3;
+                optional string customUserHandshakePriority = 4;
+                optional string customUserCertificateType = 5;
+                optional uint32 maxConnections = 6;
+                optional string securityProfile = 7;
+                optional bool createKeys = 8;
+            }
+            optional Ssl ssl = 5;
+        }
+        optional System system = 17;
+        optional bool convertedFromV10Config = 18;
+        optional string v10md5 = 19;
+    }
+    optional General general = 1;
+    message ManualLocation {
+        optional string latitude = 1 ;
+        optional string longitude = 2 ;
+        optional double altitude = 3 ;
+    }
+    optional ManualLocation manualLocation = 10;
+    message ManualIPv4 {
+        optional string address = 1 ;
+        optional string subnet = 2 ;
+        optional string gateway = 3 ;
+        optional string dns = 4 ;
+    }
+    message IPv4 {
+        optional string assignmentMethod = 1 ;
+        optional ManualIPv4 manualIPv4 = 2;
+    }
+    optional IPv4 ipv4 = 20;
+    message DHCPServer {
+        optional bool enable = 1 ;
+    }
+    optional DHCPServer dhcpServer = 30;
+    message Battery {
+        optional uint32 warningThresholdMinutes = 1 ;
+        optional uint32 errorThresholdMinutes = 2 ;
+    }
+    optional Battery battery = 40;
+    message PortVLANConfig {
+        optional bool acceptUntagged = 1 ;
+        optional bool acceptSelectedVLANs = 2 ;
+        optional bool acceptNonSelectedVLANs = 3 ;
+        message SelectedVLAN {
+            optional uint32 vlan = 1 ;
+            optional BCRAction action = 2;
+        }
+        repeated SelectedVLAN selectedVLANs= 4 ;
+        optional uint32 nativeVLAN = 5 ;
+    }
+    message Wireless {
+        optional uint32 key = 1;
+        optional BCRAction action = 2;
+        optional bool enableMesh = 3 ;
+        optional string regComplianceMode = 4 ;
+        optional uint32 countryCode = 5 ;
+        optional uint32 txPower = 6 ;
+        optional uint32 channel = 7 ;
+        optional string bandwidth = 8 ;
+        optional uint32 beaconIntervalMS = 9 ;
+        optional uint32 timeoutSeconds = 10 ;
+        optional uint32 IMMinCostDiffPercent = 11 ;
+        optional uint32 multicastRate = 12 ;
+        optional uint32 rangeMeters = 13 ;
+        optional uint32 rxSelect = 14 ;
+        optional uint32 txSelect = 15 ;
+        optional bool enableBRA = 16 ;
+        message AP {
+            optional uint32 key = 1;
+            optional BCRAction action = 2;
+            optional bool enable = 3 ;
+            optional string essid = 4 ;
+            optional bool enableEssidBroadcast = 5 ;
+            optional PortVLANConfig portVLANConfig = 6;
+            message ApSecurity {
+                optional string mode = 1 ;
+                optional string wpaKeyType = 2 ;
+                optional string passphrase = 3 ;
+                optional bytes rawkey = 4 ;
+                optional string cipherSuite = 5 ;
+                optional uint32 gtkRekeyIntervalSeconds = 6 ;
+                optional bool gtkRekeyWhenStationLeaves = 7 ;
+                optional uint32 gmkRekeyIntervalSeconds = 8 ;
+                message Server { // DEPRECATED
+                    optional uint32 key = 1 ; // DEPRECATED
+                    optional BCRAction action = 2; // DEPRECATED
+                    optional uint32 port = 3 ; // DEPRECATED
+                    optional string sharedSecret = 4 ; // DEPRECATED
+                    optional string address = 5 ; // DEPRECATED
+                } // DEPRECATED
+                message RadiusServer {
+                    optional uint32 key = 1 ;
+                    optional BCRAction action = 2;
+                    optional uint32 port = 3 ;
+                    optional string sharedSecret = 4 ;
+                    optional string address = 5 ;
+                }
+                message AccountingServer {
+                    optional uint32 key = 1 ;
+                    optional BCRAction action = 2;
+                    optional uint32 port = 3 ;
+                    optional string sharedSecret = 4 ;
+                    optional string address = 5 ;
+                }
+                repeated Server radius = 9 ; // DEPRECATED! Don't use this field!
+                repeated Server accounting = 10 ; // DEPRECATED! Don't use this field!
+                optional uint32 radiusRetryIntervalSeconds = 11 ;
+                optional uint32 accountingRetryIntervalSeconds = 12 ;
+                optional bytes wpaRawkey = 13 ;
+                repeated RadiusServer radiusServer = 14 ;
+                repeated AccountingServer accountingServer = 15 ;
+            }
+            optional ApSecurity security = 7;
+        }
+        repeated AP ap = 17 ;
+        optional string name = 18 ;
+        optional uint32 maximumPeers = 19 ;
+        optional int32 noiseWarnThreshold = 20;
+        optional int32 noiseErrorThreshold = 21;
+        optional bool enableCapture = 22;
+        optional bool compression = 23 ;
+    }
+    repeated Wireless wireless = 50;
+    message Wired {
+        optional uint32 key = 1;
+        optional BCRAction action = 2;
+        optional string mode = 3 ;
+        optional string speedMbps = 4 ;
+        optional string duplexMode = 5 ;
+        optional string gatewayMode = 6 ;
+        optional ManualIPv4 ipv4 = 7;
+        optional PortVLANConfig portVLANConfig = 8;
+        optional string name = 9 ;
+        optional bool requestFallback = 10 ;
+        optional bool alternateGateway = 11 ;
+    }
+    repeated Wired wired = 60;
+    message PortForwards {
+        message PortForward {
+            optional uint32 fromPortLow = 1 ;
+            optional BCRAction action = 2;
+            optional uint32 fromPortHigh = 3 ;
+            optional uint32 toPortLow = 4 ;
+            optional string toAddress = 5 ;
+            optional bool enabled = 6 ;
+            optional string application = 7 ;
+            optional string protocol = 8 ;
+        }
+        repeated PortForward portForward = 1 ;
+    }
+    optional PortForwards portForwards = 70;
+    message Security {
+        message Passphrase {
+            optional string viewPassphrase = 10 ;
+            optional string adminPassphrase = 11 ;
+            optional string coPassphrase = 12 ;
+        }
+        optional Passphrase passphrase = 1;
+        message ACL{
+            message ACLEntry {
+                optional bytes mac = 1 ;
+                optional BCRAction action = 2;
+                optional string comment = 3 ;
+            }
+            repeated ACLEntry whiteList = 1 ;
+            repeated ACLEntry blackList = 2 ;
+            optional string aclMode = 3 ;
+            optional bool apOnly = 4 ;
+        }
+        optional ACL acl = 2;
+        optional string packetCipher = 3 ;
+        optional string macCipher = 4 ;
+        optional string authMac = 5 ;
+        optional bytes networkKey = 6 ;
+        optional uint32 networkKeySequenceNumber = 9;
+        optional string networkPassphrase = 10;
+        optional string networkKeyType = 11;
+        optional bytes v10NEK = 7 ;
+        optional bytes v10NAK = 8 ;
+        optional bool FIPS = 12;
+        optional bool allowHwCrypto = 13;
+        }
+    optional Security security = 80;
+    message InstaMesh {
+            optional uint32 ds = 1 ;
+            optional uint32 dt = 2 ;
+            optional uint32 maxTTL = 3 ;
+            optional uint32 gcInterval = 4 ;
+            optional uint32 gcMinimumAge = 5 ;
+            optional uint32 gcThresh = 6 ;
+            optional uint32 maxFloodPackets = 7 ;
+            optional uint32 maxFloodPerSourcePackets = 8 ;
+            optional uint32 aptTimeout = 9 ;
+            optional uint32 aptKeepAliveInterval = 10 ;
+            optional uint32 arpProxyTimeout = 11 ;
+            optional uint32 arpGcThresh = 12 ;
+            optional uint32 connectionTimeout = 13 ;
+            optional uint32 keepAliveInterval = 14 ;
+            optional uint32 aptPriority = 15 ;
+            optional uint32 broadcastReceiveThreshold = 16 ;
+            optional uint32 crumbGcThresh = 17 ;
+            optional bool dropSTP = 18 ;
+            optional bool v10Compat = 19 ;
+            optional bool reportPeerLinkStatistics = 20 ;
+            optional string networkName = 21 ;
+            optional uint32 tacticalMulticastCoalesceInterval = 22 ;
+            optional uint32 costDecayInterval = 23 ;
+            optional uint32 rptInt = 24 ;
+            message RptHost {
+                optional string name = 1 ;
+                optional BCRAction action = 2;
+            }
+            repeated RptHost hosts = 25 ;
+            optional bool tacticalMulticast = 26 ;
+            optional uint32 excellentCost = 27 ;
+            optional uint32 goodCost = 28 ;
+            optional uint32 fairCost = 29 ;
+            optional uint32 ndGcThresh = 30 ;
+    }
+    optional InstaMesh instamesh = 90;
+    message BreadcrumbLog {
+        optional string name = 1 ;
+        optional BCRAction action = 2 ;
+        optional string level = 3 ;
+        optional bool persist = 4 ; 
+    }
+    message BreadcrumbService {
+        repeated BreadcrumbLog log = 1 ;
+    }
+    optional BreadcrumbService breadcrumbService = 100 ;
+    message VLAN {
+        optional uint32 number = 1 ;
+        optional BCRAction action = 2;
+        optional uint32 priority = 3 ;
+        optional string name = 4 ;
+    }
+    repeated VLAN vlans = 110 ;
+    message TRoIP {
+        optional uint32 instanceCount = 1 ;
+        optional bool enableSideTone = 2 ;
+        optional float sideToneGain = 3 ;
+        optional bool enableEarpiece = 4 ;
+        optional float volume = 5 ;
+        optional bool enableVAD = 6 ;
+        optional float VADThreshold = 7 ;
+        optional string micSession = 8 ;
+        optional bool enableMic = 9 ;
+        optional float micGain = 10 ;
+        optional string rightMulticastAddress = 11 ;
+        optional string leftMulticastAddress = 12 ;
+        optional bool auxAudioAvail = 13 ;
+        optional bool enableAux = 14 ;
+        optional float auxGain = 15 ;
+        optional string auxSession = 16 ;
+        optional bool enableMulticast = 17 ;
+        optional uint32 debugLevel = 18 ;
+        optional string forceMixmasterIP = 19 ;
+        optional bool enableHidPtt = 20 ;
+        optional bool rawHidPtt = 21 ;
+        optional uint32 IpDscp = 22 ;
+        optional string playFilename = 23 ;
+        optional string captureDevice = 24 ;
+        optional string playoutDevice = 25 ;
+        optional int32 mixmasterElectionBias = 26 ;
+        optional string doubleTapAction = 29 ;
+        optional bool localMixmaster = 30 ;
+        optional string audioCodec = 31 ;
+        optional uint32 leftCallSlot = 32;
+        optional uint32 rightCallSlot = 33;
+        message CallGroup {
+            optional string multicastIP  = 1 ;
+            optional BCRAction action = 2;
+            optional uint32 multicastPort = 3;
+            optional string groupName = 4 ;
+            optional bool isMember = 5 ;
+        }
+        repeated CallGroup callGroups = 100 ; // deprecated in 11.2.0
+        message CallGroupSlot {
+            optional uint32 slotNumber = 1;
+            optional BCRAction action = 2;
+            optional string groupName = 3;
+            optional bool isMember = 4;
+        }
+        repeated CallGroupSlot callGroupSlots = 101;
+    }
+    optional TRoIP troip = 120;
+    message Capture {
+        optional bool enabled = 1;
+        // optional string RRADSaddr = 2;
+        // optional uint32 RRADSport = 3;
+        optional uint32 packetsz = 4;
+        optional uint32 port = 5;
+    }
+    optional Capture capture = 130;
+    message SNMPServer {
+        optional bool enable = 1 [default = false];
+    }
+    optional SNMPServer snmpServer = 140;
+
+
+    message Industrial {
+        optional string mode    = 2 [default = "NONE"];
+        message Modbus {
+            optional int32  tcpPort = 2 [default = 1502];
+            optional string device  = 3 [default = "/dev/ttyS0"];
+            optional string baudRate= 4 [default = "115200"];
+            optional string dataBits= 5 [default = "8"];
+            optional string parity  = 6 [default = "N"];
+            optional string stopBits= 7 [default = "1"];
+            optional int32  slaveId = 8 [default = 1];
+        }
+        optional Modbus modbus = 1;
+    }
+    optional Industrial industrial  = 150;
+
+    message UserField {
+        optional string name = 1 ;
+        optional BCRAction action = 2;
+        message Value {         
+            optional string value = 1 ;
+            optional BCRAction  action = 2;
+        }
+        repeated Value value = 3 ;     // field value(s)
+        optional string namespace = 5 ; // uniquely identify client, e.g., by domain name
+    }
+    repeated UserField userFields = 999;
+}
+// generated: Mon Aug 06 17:38:12 EDT 2012
+// source md5: 9cf54a5f1a7aa476af1db076bab1d2c3

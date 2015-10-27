@@ -1,0 +1,16 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "HardwareProtos";
+option optimize_for = CODE_SIZE;
+
+/**
+ * Contains information associated with the unique identity assigned to a
+ * BreadCrumb, such as its serial number, model, and date of manufacture.
+ */
+message Hardware {
+  optional string serial = 1;
+  optional string profile = 2;
+  optional string imkey = 3;
+  optional string date = 4;
+  optional bytes v10factory = 5;
+  optional uint32 countrycode = 6;
+}

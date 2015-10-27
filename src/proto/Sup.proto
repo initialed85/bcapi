@@ -1,0 +1,72 @@
+package sup;
+
+option java_package = "com.rajant.sup";
+option java_outer_classname = "SupProtos";
+
+/**
+ * The underlying wire structure behind all Sup protocol communications.
+ */
+message SupMessage {
+
+    enum Header {
+        HEADER_VALUE = 0x73757000;  // "sup\0", encodes as 0x0880e0d59b07
+    }
+
+    required Header header = 1;
+
+    enum MessageType {
+        REQUEST = 0;
+        RESPONSE = 1;
+    }
+
+    required MessageType messageType = 2;
+
+    // name of service being requested (in a request) or announced (in a response)
+    required string service = 3;
+
+    // client-assigned query id.  if present, echoed by server in response in order
+    // to correlate responses with requests.  opaque string.
+    optional string qid = 4;
+
+    // if set, asks server to wait for a random period of time up to this number
+    // number of milliseconds before responsing.  this allows for randomly
+    // staggered responses, e.g., in response to a broadcast request (which could
+    // otherwise result in a massive simultaneous broadcast of immediate responses)
+    optional int32 maxWait = 5;
+
+    // if set in a request, instructs server to suppress a response if it has
+    // reason to believe that requestor already knows about the server
+    optional bool quiet = 6;
+
+    // service-specific properties.  up to implementation.
+    message Properties {
+        required string key = 1;
+        required string value = 2;
+    }
+    repeated Properties properties = 7;
+    
+    // If specified by the client, the server should reply to THIS
+    // ip address rather than the one that sent the request.  This is
+    // a string representation of an ipv4 or ipv6 address or hostname.
+    // If the specified address is not valid, the server should log the
+    // error and drop the request.
+    //
+    // If the client provides either otherAddress or otherPort in its
+    // request, then the server must fill in these fields with the
+    // address and port *from which that request originated*.  This
+    // informs the recipient of the response of the host that sent the
+    // request on their behalf.
+    optional string otherAddress = 8;
+    
+    // If specified by the client, the server should reply to THIS port
+    // rather than the one that sent the request.  If the specified port
+    // is not valid, the server should log the error and drop the request.
+    //
+    // If the client provides either otherAddress or otherPort in its
+    // request, then the server must fill in these fields with the
+    // address and port *from which that request originated*.  This
+    // informs the recipient of the response of the host that sent the
+    // request on their behalf.
+    optional uint32 otherPort = 9;
+}
+

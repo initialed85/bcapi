@@ -1,0 +1,21 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "FileTransferProtos";
+option optimize_for = CODE_SIZE;
+
+package rajant.bc.proto;
+
+message FileTransfer {
+
+    message Start {
+        optional bool append = 1;           // if true, append to existing firmware file (if any).  otherwise, start new file
+        required uint32 expectedSize = 2;   // total size in bytes of the complete firmware image
+        required string version = 3;        // full version string being installed (e.g., "11.0.0-beta2")
+    }
+    optional Start start = 1;           // required once at start of transfer.  Only one transfer may take place at a time.
+        
+    optional bytes data = 2;  // the next chunk of the firmware file.  total size of entire BCMessage may not exceed 64KB.
+    
+    optional bool cancel = 3; // cancel the current firmware update if there is one and it is owned by this session.
+
+    optional string clientId = 4; // opaque client-supplied identifier (uuid intended)
+}

@@ -1,0 +1,17 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "SystemProtos";
+option optimize_for = CODE_SIZE;
+
+import "Config.proto";
+
+message SystemConfiguration {
+  optional Config configuration = 1;
+  optional bytes publicSSLKey = 2;
+  optional bytes privateSSLKey = 3;
+  message SshKeys {
+        optional bytes authorized = 1;
+        optional bytes dss = 2;
+        optional bytes rsa = 3;
+  }
+  optional SshKeys sshKeys = 4; 
+}

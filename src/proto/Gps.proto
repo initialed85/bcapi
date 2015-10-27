@@ -1,0 +1,34 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "GpsProtos";
+option optimize_for = CODE_SIZE;
+
+/**
+ * Conveys GPS location data if a device supports it.
+ */
+message GPS {
+    message GPSEnabledSwitch {
+        optional bool enabled = 1;
+    }
+
+    message GPSPositionReport {
+        optional float  gpsTime     = 1;
+        optional string gpsLat      = 2;
+        optional string gpsLong     = 3;
+        optional float  gpsPrecisionH   = 4;
+        optional float  gpsQuality  = 5;
+        optional uint32 gpsSatsInView   = 6;
+        optional float  gpsAlt      = 7;
+        optional float  gpsGeoidalSep   = 8;
+    }
+
+    message GPSVelocityReport {
+        optional float gpsTrackDegreesTrue  = 1;
+        optional float gpsTrackDegreesMag   = 2;
+        optional float gpsSpeedKnots        = 3;
+        optional float gpsSpeedKph      = 4;
+    }
+
+    optional GPSEnabledSwitch  gpsSwitch    = 1;
+    optional GPSPositionReport gpsPos   = 2;
+    optional GPSVelocityReport gpsVel   = 3;
+}

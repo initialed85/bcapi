@@ -1,0 +1,34 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "ConfigMetaProtos";
+option optimize_for = CODE_SIZE;
+
+package rajant.bc.proto;
+
+// ConfigMeta provides locale-specific text associated with configuration
+// fields.
+message ConfigMeta {
+
+    // The path to the Associated Field relative to the top-level of a
+    // "Config" message.
+    required string path = 1;
+
+    // The name of the field for display purposes
+    required string name = 2;
+    
+    // help text
+    optional string help = 3;
+    
+    // comment for developers accessing this configuration field
+    optional string comment = 4;
+
+    // descriptive text for the enum values of the associated field,
+    // accessed via the RuleProto with the same path.  The number of
+    // elements must be exactly the same between this field and
+    // rule.enumValues.  Text matches in order (the first enumText
+    // corresponds to the first enumValue, etc.)
+    repeated string enumText = 5;
+}
+
+message ConfigMetaSet {
+    repeated ConfigMeta configMetas = 1;
+}

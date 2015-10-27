@@ -1,0 +1,277 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "StateProtos";
+option optimize_for = CODE_SIZE;
+
+import "Common.proto";
+import "Config.proto";
+import "Hardware.proto";
+import "Gps.proto";
+
+/**
+ * State represents a variety of run-time data associated with the BreadCrumb,
+ * including environment, statistics, and configuration.  It is the primary
+ * vehicle for obtaining information on the operational state of the device.
+ */
+message State {
+    message IPv4Type {
+        optional string address = 1;
+        optional string subnet = 2;
+        optional string gateway = 3;
+        optional string dns = 4;
+    }
+
+    message System {
+        optional string kernel = 1;
+        optional string platform = 2;
+        optional float uptime = 3;
+        optional float idle = 4;
+        optional bool running = 5;
+        optional bool bridgeup = 6;
+        optional string version = 7;
+        optional int32 freeMemory = 8;
+        optional bool generateEntropy = 9;
+        optional bool factoryMode = 10;
+        optional bytes networkId = 11; // meshid 6 bytes
+        optional IPv4Type ipv4 = 12;
+        optional uint32 encapId = 13;
+        optional bool locked = 14;
+        optional bool reboot = 15; // needs reboot
+        optional string legacyPlatform = 16;
+        optional int32 temperature = 17;
+        optional bool isRebooting = 18;
+        optional string macs = 19;
+        optional uint32 bootCounter = 20;
+
+        message Device {
+            optional string pSlot = 1;
+            optional BCRAction action = 2;
+            optional uint32 vendorId = 3;
+            optional uint32 deviceId = 4;
+            optional uint32 subsystemVendorId = 5;
+            optional uint32 subsystemDeviceId = 6;
+        }
+        repeated Device device = 21;
+        repeated RptPeer rptPeer = 22;
+    }
+
+    optional System system = 10;
+
+    message Build {
+        optional string date = 1;
+        optional string user = 2;
+        optional string number = 3;
+        optional string host = 4;
+        optional string description = 5;
+    }
+    optional Build build = 20;
+
+    message InstaMesh {
+        optional uint32 arpDropped = 1;
+        optional uint32 arpRequests = 2;
+        optional uint32 arpRequestsAnswered = 3;
+        optional uint32 arpRequestsUnicasted = 4;
+        optional uint32 arpTotal = 5;
+        optional uint32 floodsDropped = 6;
+        optional uint32 packetsDropped = 7;
+        optional uint32 packetsMulticast = 8;
+        optional uint32 packetsReceived = 9;
+        optional uint32 packetsSent = 10;
+        optional uint32 sourceFloodsDropped = 11;
+        optional uint32 timeWaited = 12;
+        optional uint32 discoveriesSourced = 13;
+        optional uint32 discoveriesPassed = 14;
+        optional uint32 ndDropped = 15;
+        optional uint32 ndRequests = 16;
+        optional uint32 ndRequestsAnswered = 17;
+        optional uint32 ndRequestsUnicasted = 18;
+        optional uint32 ndTotal = 19;
+    }
+    optional InstaMesh instamesh = 30;
+
+    message CommStats {
+        optional uint64 rxBytes = 1;
+        optional uint64 rxPackets = 2;
+        optional uint64 txBytes = 3;
+        optional uint64 txPackets = 4;
+    }
+
+    message Peer {
+        optional bytes mac = 1;
+        optional BCRAction action = 2;
+        optional bool enabled = 3;
+        optional int32 cost = 4;
+        optional int32 rate = 5;
+        optional int32 rssi = 6;
+        optional int32 signal = 7;
+        optional uint32 age = 8;
+        optional CommStats stats = 9;
+        optional uint32 encapId = 10;
+        optional string ipv4Address = 11;
+    }
+
+    message RptPeer {
+        optional string addr = 1;
+        optional BCRAction action = 2;
+        optional bool enabled = 3;
+        optional int32 cost = 4;
+        optional CommStats stats = 5;
+        optional bytes mac = 6;
+        optional uint32 encapId = 7;
+        optional string ipv4Address = 8;
+    }
+
+    message Wireless {
+        message AP {
+            message Client {
+                optional bytes mac = 1;
+                optional BCRAction action = 2;
+                optional int32 rate = 3;
+                optional int32 rssi = 4;
+                optional int32 signal = 5;
+                optional uint32 age = 6;
+            }
+            optional uint32 key = 1;
+            optional BCRAction action = 2;
+            optional string essid = 3;
+            repeated Client client = 4;
+        }
+        optional uint32 key = 1;
+        optional BCRAction action = 2;
+        optional bytes mac = 3;
+        optional string name = 4;
+        optional int32 noise = 5;
+        optional uint32 channel = 6;
+        optional int32 range = 7;
+        optional int32 rxAntennaSelect = 8;
+        optional int32 timeout = 9;
+        optional int32 txpower = 10;
+        optional int32 txAntennaSelect = 11;
+        optional string type = 12;
+        optional bool uapsd = 13;
+        optional CommStats stats = 14;
+        repeated AP ap = 15;
+        repeated Peer peer = 16;
+        optional uint64 channelActiveTime = 17;
+        optional uint64 channelBusyTime = 18;
+        optional uint64 channelReceiveTime = 19;
+        optional uint64 channelTransmitTime = 20;
+    }
+    repeated Wireless wireless = 40;
+
+    message Wired {
+        enum AptState {
+            APT_STATE_MASTER = 0;
+            APT_STATE_SLAVE = 1;
+            APT_STATE_NONE = 2;
+            APT_STATE_LINK = 3;
+        }
+        optional uint32 key = 1;
+        optional BCRAction action = 2;
+        optional bytes mac = 3;
+        optional bytes masterMac = 4;
+        optional AptState aptState = 5;
+        optional CommStats stats = 6;
+        repeated Peer peer = 7;
+        optional string name = 8;
+        optional IPv4Type ipv4 = 9;
+    }
+
+    repeated Wired wired = 60;
+
+    
+    // (obsolete) optional Config configuration = 100;
+
+    message Configuration {
+        optional Config saved = 1;
+        optional Config active = 2;
+    }
+
+    optional Configuration configuration = 105;
+
+    optional Hardware hardware = 110;
+
+    message BreadcrumbLog {
+        optional string name = 1;
+        optional BCRAction action = 2;
+        optional string level = 3;
+    }
+    message BreadcrumbService {
+        repeated BreadcrumbLog log = 1;
+    }
+    optional BreadcrumbService breadcrumbService = 120;
+
+    message AdminSession {
+        optional uint64 sessionID = 1;      // auto-assigned by breadcrumb
+        optional BCRAction action = 2;
+        optional uint32 age = 3;            // age of session in seconds
+        optional string userAgent = 4;      // copied from client's Auth response
+        optional string remoteUsername = 5; // copied from client's Auth response
+        optional string remoteOS = 6;       // copied from client's Auth response
+        optional string appInstanceID = 7;  // copied from client's Auth response
+        optional Role role = 8;             // copied from client's Auth response
+        
+        optional string address = 9;        // remote address (IPv4 or IPv6) of client
+        optional uint32 port = 10;          // remote port (IPv4 or IPv6) of client
+    }
+    repeated AdminSession adminSessions = 130;
+    
+    message FileTransfer {
+        enum FileTransferState {
+            UPLOADING = 0;
+            UPLOAD_COMPLETED = 1;
+            UPLOAD_FAILED = 2;
+            UPLOAD_CANCELED = 3;
+            UPLOAD_IDLE = 4;
+        }
+        optional FileTransferState state = 1;
+    
+        message FileTransferInfo {
+            optional uint64 id = 6;             // crumb-unique identifier
+            optional string clientId = 7;       // opaque client-supplied identifier (uuid intended)
+            optional uint64 adminSessionID = 1; // refers to State.AdminSession.sessionID
+            optional uint32 bytesExpected = 2;  // total bytes to be transferred
+            optional uint32 bytesReceived = 3;  // bytes received so far
+            optional string version = 4;        // full version number being uploaded
+            optional string md5 = 5;             // md5 of bytes received, only uploaded when state goes to
+        }
+        optional FileTransferInfo info = 2;
+    }
+    optional FileTransfer fileTransfer = 140;
+
+    optional GPS gps = 150;
+
+    optional TaskObject task = 160;
+    
+    optional AlertSystem alertSystem = 170;
+
+    message Battery {
+        optional string hardwareRevision = 1;
+        optional uint32 milliamps = 2;
+        optional bool charging = 3;
+        optional uint32 capacityPercent = 4;
+        optional uint32 flags = 5;
+        optional uint32 temperatureCelsius = 6;
+        optional uint32 dischargeTimeMinutes = 7;
+        optional uint32 chargeTimeMinutes = 8;
+        optional uint32 warningThresholdMinutes = 9;
+        optional uint32 errorThresholdMinutes = 10;     
+    }
+    optional Battery battery = 180;
+
+    message Manufacturer {
+        optional string model = 1;
+        optional string date = 2;
+        optional uint32 serial = 3;
+        repeated bytes mac = 4;
+    }
+    optional Manufacturer manufacturer = 190;
+
+    message TRoIP {
+        optional bool active         = 1 ;
+        optional bool mixmaster      = 2 ;
+        optional bool mixmasterLeft  = 3 ;
+        optional bool mixmasterRight = 4 ;
+    }
+    optional TRoIP troip = 200;
+
+}

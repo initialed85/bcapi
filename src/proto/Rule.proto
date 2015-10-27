@@ -1,0 +1,119 @@
+option java_package = "com.rajant.bcapi.protos";
+option java_outer_classname = "RuleProtos";
+option optimize_for = CODE_SIZE;
+
+package rajant.bc.proto;
+
+// every configuration field has a permission level that corresponds
+// to a minimum role that must be associated with the session setting
+// the field.   
+enum Permission {
+    VIEW = 40;  // user: "view".  Read-only user, may not change any settings.
+                // As a result, no field will have this as a permission level.
+                
+    LOCAL = 30; // user: "local".  The local user is the user *at* the BreadCrumb.
+                // They must be communicating with the BreadCrumb via a non-mesh
+                // interface (local eth or direct wireless client).
+                
+    ADMIN = 20; // user: "admin".  May change any setting except for those
+                // relating to security.
+                
+    CO = 10;    // user: "co".  May change any setting including those
+                // relating to security (encryption modes, keys, etc.).
+                
+    ROOT = 0;   // user: n/a.  This permission is reserved for local processes
+                // running on the BreadCrumb.  As a result, no field will have
+                // this as a permission level.
+}
+
+// A validation rule for a field within a Config message.  Validation rules
+// only apply to protobuf primitive types; they do not apply to enums or
+// to child Messages, although they may apply to primitives types *within*
+// child Messages.
+//
+// The actual field within the Config message associated with this rule is
+// referred to below as the "Associated Field".
+message Rule {
+
+    // The path to the Associated Field relative to the top-level of a
+    // "Config" message.    
+    required string path = 1;
+    
+    // The (minimum) permission level required to modify the Associated Field.
+    optional Permission permission = 2 [default = ADMIN];
+    
+    // the default value of the Associated Field, encoded as a string.
+    // booleans are encoded using "0" for false and "1" for true.
+    optional string defaultValue = 3;
+    
+    // Certain Associated Fields are "write only" and are never reported
+    // back to any clients.  An example of a write-only field is an
+    // encryption key.  They may be set, but never read.
+    optional bool isWriteOnly = 4;  
+    
+    // The meaning of "min" varies depending upon the data type of the
+    // Associated Field:
+    //   For NUMERIC fields, this is a string representation of the minimum value allowed
+    //   For STRING and BYTESTRING fields, this is a string representation of the minimum *length* allowed
+    // For all other Associated Field types, "min" is ignored.
+    optional string min = 6;
+    
+    // The meaning of "max" varies depending upon the data type of the
+    // Associated Field:
+    //   For NUMERIC fields, this is a string representation of the maximum value allowed
+    //   For STRING and BYTESTRING fields, this is a string representation of the maximum *length* allowed
+    // For all other Associated Field types, "max" is ignored.
+    optional string max = 7;
+    
+    // A set of allowed values for the Associated Field, encoded as strings.
+    // This may be applied to any primitive type except for booleans.
+    repeated string enumValues = 8;
+    
+    // A set of regular expressions, at least one of which must match the
+    // value of the Associated Field.
+    // This is only applied to strings.
+    repeated string regex = 9;
+    
+    // A set of valid lengths, at least one of which must exactly match the
+    // length of the value of the Associated Field.
+    // This is only applied to STRINGs and BYTESTRINGs.
+    repeated uint32 validLengths = 10;
+
+    // the path to a repeated field upon which the Associated Field depends
+    // for valid values
+    optional string refPath = 11;
+    
+    // Is this field required when validating a full configuration?
+    optional bool isRequired = 12;
+    
+    // does the BreadCrumb have to take any further steps after saving?
+    enum ActivationAction {
+        NOTHING = 0;
+        RESTART_MESH = 1;
+        REBOOT = 2;
+    }
+    optional ActivationAction activationAction = 13 [default = REBOOT];
+    
+    // should the client put any ui constraints on bulk configuration?
+    enum BulkConfigGuidance {
+        ALLOW = 0;
+        UNIFORM_MODELS_ONLY = 1;
+        DISALLOW = 2;
+    }
+    optional BulkConfigGuidance bulkConfigGuidance = 14 [default = UNIFORM_MODELS_ONLY];
+
+    enum SyncScope {
+        NONE = 0;
+        MODEL = 1;
+        MESH = 2;
+    }
+    optional SyncScope syncScope = 15 [default = MODEL];
+}
+
+message RuleSet {
+    repeated Rule rules = 1;
+    // optional bytes fileDescriptorProtoData = 2; // DEPRECATED
+
+    // file descriptor protos for Config in least-to-most dependent order
+    repeated bytes fileDescriptorProtoData = 3;
+}
